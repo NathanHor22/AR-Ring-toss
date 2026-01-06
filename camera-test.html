@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Camera Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #000; 
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        video { 
+            width: 100vw; 
+            height: 100vh; 
+            object-fit: cover; 
+        }
+        #info {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.9);
+            color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 999;
+            max-width: 80%;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .warning { color: #ffaa00; }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h3>Camera Test (No AR)</h3>
+        <div>Status: <span id="status" class="warning">Initializing...</span></div>
+        <div>Resolution: <span id="resolution">-</span></div>
+        <div>Browser: <span id="browser">-</span></div>
+        <div style="margin-top: 10px; font-size: 12px;">
+            If you see camera feed, your camera works!
+        </div>
+    </div>
+    <video id="video" autoplay playsinline muted></video>
+
+    <script>
+        const video = document.getElementById('video');
+        const status = document.getElementById('status');
+        const resolution = document.getElementById('resolution');
+        const browser = document.getElementById('browser');
+
+        // Detect browser
+        const ua = navigator.userAgent;
+        if (ua.includes('Chrome')) browser.textContent = 'Chrome';
+        else if (ua.includes('Firefox')) browser.textContent = 'Firefox';
+        else if (ua.includes('Safari')) browser.textContent = 'Safari';
+        else browser.textContent = 'Unknown';
+
+        async function startCamera() {
+            try {
+                status.textContent = 'Requesting camera permission...';
+                status.className = 'warning';
+
+                // Request back camera
+                const constraints = {
+                    video: {
+                        facingMode: { ideal: 'environment' },
+                        width: { ideal: 1280 },
+                        height: { ideal: 960 }
+                    },
+                    audio: false
+                };
+
+                console.log('Requesting camera with constraints:', constraints);
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                console.log('✅ Got camera stream');
+
+                video.srcObject = stream;
+
+                video.onloadedmetadata = () => {
+                    status.textContent = '✅ CAMERA WORKING!';
+                    status.className = 'success';
+                    resolution.textContent = `${video.videoWidth} x ${video.videoHeight}`;
+                    console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight);
+                    
+                    // Log track info
+                    const track = stream.getVideoTracks()[0];
+                    console.log('Track label:', track.label);
+                    console.log('Track settings:', track.getSettings());
+                };
+
+                video.onerror = (err) => {
+                    console.error('Video error:', err);
+                    status.textContent = '❌ Video playback error';
+                    status.className = 'error';
+                };
+
+            } catch (err) {
+                console.error('Camera error:', err);
+                status.textContent = `❌ ${err.name}: ${err.message}`;
+                status.className = 'error';
+                
+                // Show helpful message
+                if (err.name === 'NotAllowedError') {
+                    alert('Camera permission denied. Please allow camera access in your browser settings.');
+                } else if (err.name === 'NotFoundError') {
+                    alert('No camera found on this device.');
+                } else if (err.name === 'NotReadableError') {
+                    alert('Camera is being used by another app. Close other apps and try again.');
+                } else {
+                    alert(`Camera error: ${err.message}`);
+                }
+            }
+        }
+
+        // Check if getUserMedia is supported
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            status.textContent = '❌ Camera API not supported';
+            status.className = 'error';
+            alert('Your browser does not support camera access. Try updating Chrome.');
+        } else {
+            startCamera();
+        }
+    </script>
+</body>
+</html>
