@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AR Test - Camera Only</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <div>Camera: <span id="status">Loading...</span></div>
+        <div>Marker: <span id="markerStatus">Searching...</span></div>
+        <div style="margin-top: 10px; font-size: 11px;">
+            If you see camera feed, AR.js works!<br>
+            Point at Hiro marker to test detection.
+        </div>
+    </div>
+
+    <a-scene
+        embedded
+        arjs="sourceType: webcam; debugUIEnabled: false;"
+        vr-mode-ui="enabled: false">
+        
+        <a-entity camera></a-entity>
+        
+        <a-marker preset="hiro" id="marker" emitevents="true">
+            <!-- Simple test object -->
+            <a-box position="0 0.5 0" material="color: red;" scale="0.5 0.5 0.5"></a-box>
+        </a-marker>
+    </a-scene>
+
+    <script>
+        setTimeout(() => {
+            const video = document.querySelector('video');
+            const statusEl = document.getElementById('status');
+            
+            if (video && video.srcObject) {
+                statusEl.textContent = '✅ Working';
+                statusEl.style.color = '#00ff00';
+                console.log('Camera active');
+            } else {
+                statusEl.textContent = '❌ Failed';
+                statusEl.style.color = '#ff0000';
+                console.log('Camera failed');
+            }
+        }, 3000);
+
+        const marker = document.querySelector('#marker');
+        if (marker) {
+            marker.addEventListener('markerFound', () => {
+                document.getElementById('markerStatus').textContent = '✅ Found!';
+                document.getElementById('markerStatus').style.color = '#00ff00';
+                console.log('Marker detected');
+            });
+            
+            marker.addEventListener('markerLost', () => {
+                document.getElementById('markerStatus').textContent = '⚠️ Lost';
+                document.getElementById('markerStatus').style.color = '#ffaa00';
+                console.log('Marker lost');
+            });
+        }
+    </script>
+</body>
+</html>
